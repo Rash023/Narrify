@@ -3,12 +3,19 @@ import { Hono } from "hono";
 import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { decode, sign, verify } from 'hono/jwt'
+import { createBlogInput,updateBlogInput } from "@rash023/narrify";
+
+
 
 
 export const blogRouter=new Hono<{
     Bindings:{
         DATABASE_URL:string,
         JWT_SECRET:string
+    },
+    Variables:{
+        id:string
+
     }
 }>();
 
@@ -16,20 +23,29 @@ export const blogRouter=new Hono<{
 
 //middleware for blog
 blogRouter.use('/*',async (c,next)=>{
-    const prisma = new PrismaClient({
-        datasourceUrl: c.env.DATABASE_URL,
-    }).$extends(withAccelerate())
-    const header=await c.req.header("authorization")?.replace("Bearer ","").trim() || "";
-    const response= await verify(header,c.env.JWT_SECRET);
-    
-    if(response.id){
-      await next()
+    try{
+        const prisma = new PrismaClient({
+            datasourceUrl: c.env.DATABASE_URL,
+        }).$extends(withAccelerate())
+        const header= c.req.header("authorization")?.replace("Bearer ","")|| "";
+        const user= await verify(header,c.env.JWT_SECRET);
+        
+        if(user){
+            //@ts-ignore
+            c.set("id",user.id);
+            await next()
+        }
+        else{
+          c.status(403) 
+          return c.json({error:"unauthorized"})
+        }
+        
     }
-    else{
-      c.status(403) 
-      return c.json({error:"unauthorized"})
+    catch(error){
+        c.status(404);
+        c.json({error:"Internal Server error"});
     }
-    
+   
   
   });
 
@@ -39,12 +55,20 @@ blogRouter.use('/*',async (c,next)=>{
         datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate())
     try{
+        const userId=c.get("id");
+
         const body=await c.req.json();
+        const {success}=createBlogInput.safeParse(body);
+
+        if(!success){
+            c.status(411);
+            c.json({message:"Invalid input"})
+        }
         const newBlog=await prisma.post.create({
             data:{
                 title:body.title,
                 content:body.content,
-                authorId:"1"
+                authorId:userId
             }
         });
 
@@ -64,6 +88,11 @@ blogRouter.use('/*',async (c,next)=>{
     }).$extends(withAccelerate())
     try{
         const body=await c.req.json();
+        const {success}=updateBlogInput.safeParse(body);
+        if(!success){
+            c.status(411);
+            c.json({message:"Invalid input"});
+        }
         const newBlog=await prisma.post.update({
             where:{
                 id:body.id
@@ -84,17 +113,36 @@ blogRouter.use('/*',async (c,next)=>{
     }
   })
 
-
   
-  blogRouter.get('/',async(c)=>{
+  blogRouter.get('/bulk',async(c)=>{
     const prisma = new PrismaClient({
         datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate())
     try{
-        const body=await c.req.json();
+        const id=c.req.param("id");
+        const blogs=await prisma.post.findMany(id);
+
+        return c.json({blogs})
+    }
+
+    catch(error){
+        c.status(411);
+        c.json({error:"Internal Server Error"});
+    }
+  })
+
+  
+  blogRouter.get('/:id',async(c)=>{
+    const prisma = new PrismaClient({
+        datasourceUrl: c.env.DATABASE_URL,
+    }).$extends(withAccelerate())
+    try{
+
+
+        const id=c.req.param("id");
         const newBlog=await prisma.post.findFirst({
             where:{
-                id:body.id
+                id,
             },
             
         });
@@ -108,20 +156,3 @@ blogRouter.use('/*',async (c,next)=>{
     }
   })
 
-
-  blogRouter.get('/bulk',async(c)=>{
-    const prisma = new PrismaClient({
-        datasourceUrl: c.env.DATABASE_URL,
-    }).$extends(withAccelerate())
-    try{
-       
-        const blogs=await prisma.post.findMany();
-
-        return c.json({blogs})
-    }
-
-    catch(error){
-        c.status(411);
-        c.json({error:"Internal Server Error"});
-    }
-  })

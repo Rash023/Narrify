@@ -6,8 +6,10 @@
   "dependencies": {
     "@prisma/client": "^5.14.0",
     "@prisma/extension-accelerate": "^1.0.0",
+    "@rash023/narrify": "^1.0.2",
     "hono": "^4.4.0",
-    "prisma": "^5.14.0"
+    "prisma": "^5.14.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240403.0",
