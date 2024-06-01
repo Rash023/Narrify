@@ -50,68 +50,65 @@ blogRouter.use('/*',async (c,next)=>{
   });
 
 
-  blogRouter.post('/',async(c)=>{
-    const prisma = new PrismaClient({
-        datasourceUrl: c.env.DATABASE_URL,
-    }).$extends(withAccelerate())
-    try{
-        const userId=c.get("id");
-
-        const body=await c.req.json();
-        const {success}=createBlogInput.safeParse(body);
-
-        if(!success){
-            c.status(411);
-            c.json({message:"Invalid input"})
-        }
-        const newBlog=await prisma.post.create({
-            data:{
-                title:body.title,
-                content:body.content,
-                authorId:userId
-            }
-        });
-
-        return c.json({id:newBlog.id})
-    }
-
-    catch(error){
+  blogRouter.post('/', async (c) => {
+    const body = await c.req.json();
+    const { success } = createBlogInput.safeParse(body);
+    if (!success) {
         c.status(411);
-        c.json({error:"Internal Server Error"});
+        return c.json({
+            message: "Inputs not correct"
+        })
     }
-  })
 
-
-  blogRouter.put('/',async(c)=>{
+    const authorId = c.get("id");
     const prisma = new PrismaClient({
-        datasourceUrl: c.env.DATABASE_URL,
+      datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate())
-    try{
-        const body=await c.req.json();
-        const {success}=updateBlogInput.safeParse(body);
-        if(!success){
-            c.status(411);
-            c.json({message:"Invalid input"});
+
+    const blog = await prisma.post.create({
+        data: {
+            title: body.title,
+            content: body.content,
+            authorId
         }
-        const newBlog=await prisma.post.update({
-            where:{
-                id:body.id
-            },
-            data:{
-                title:body.title,
-                content:body.content
-               
-            }
-        });
+    })
 
-        return c.json({id:newBlog.id})
-    }
+    return c.json({
+        id: blog.id
+    })
+})
 
-    catch(error){
+
+
+  blogRouter.put('/', async (c) => {
+    const body = await c.req.json();
+    const { success } = updateBlogInput.safeParse(body);
+    if (!success) {
         c.status(411);
-        c.json({error:"Internal Server Error"});
+        return c.json({
+            message: "Inputs not correct"
+        })
     }
-  })
+
+    const prisma = new PrismaClient({
+      datasourceUrl: c.env.DATABASE_URL,
+    }).$extends(withAccelerate())
+
+    const blog = await prisma.post.update({
+        where: {
+            id: body.id
+        }, 
+        data: {
+            title: body.title,
+            content: body.content
+        }
+    })
+
+    return c.json({
+        id: blog.id
+    })
+})
+
 
   
   blogRouter.get('/bulk',async(c)=>{
@@ -119,8 +116,19 @@ blogRouter.use('/*',async (c,next)=>{
         datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate())
     try{
-        const id=c.req.param("id");
-        const blogs=await prisma.post.findMany(id);
+       
+        const blogs=await prisma.post.findMany({
+            select:{
+                content:true,
+                title:true,
+                id:true,
+                author:{
+                    select:{
+                        name:true,
+                    }
+                }
+            }
+        });
 
         return c.json({blogs})
     }
@@ -132,27 +140,37 @@ blogRouter.use('/*',async (c,next)=>{
   })
 
   
-  blogRouter.get('/:id',async(c)=>{
+  blogRouter.get('/:id', async (c) => {
+    const id = c.req.param("id");
     const prisma = new PrismaClient({
-        datasourceUrl: c.env.DATABASE_URL,
+      datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate())
-    try{
 
-
-        const id=c.req.param("id");
-        const newBlog=await prisma.post.findFirst({
-            where:{
+    try {
+        const blog = await prisma.post.findFirst({
+            where: {
                 id,
             },
-            
+            select: {
+                id: true,
+                title: true,
+                content: true,
+                author: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
+        })
+    
+        return c.json({
+            blog
         });
-
-        return c.json({blog:newBlog})
-    }
-
-    catch(error){
+    } catch(e) {
         c.status(411);
-        c.json({error:"Internal Server Error"});
+        return c.json({
+            message: "Error while fetching blog post"
+        });
     }
-  })
+})
 
