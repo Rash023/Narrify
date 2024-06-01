@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@rash023/narrify": "^1.0.5",
+    "@types/node": "^20.13.0",
     "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.1"

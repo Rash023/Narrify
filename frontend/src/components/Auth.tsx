@@ -3,7 +3,8 @@ import {LabelledInput} from "./LabelledInput";
 import { useState } from "react";
 import axios from "axios";
 import { SignUpInput } from "@rash023/narrify";
-import { BACKEND_URL } from "../config";
+import dotenv from 'dotenv';
+dotenv.config();
 
 export function Auth({type}:{type:"signup" | "signin"}){
     const navigate = useNavigate();
@@ -16,7 +17,7 @@ export function Auth({type}:{type:"signup" | "signin"}){
 
     async function sendRequest() {
         try {
-            const response = await axios.post(`${BACKEND_URL}/api/v1/user/${type === "signup" ? "signup" : "signin"}`, postInputs);
+            const response = await axios.post(`${process.env.BACKEND_URL}/api/v1/user/${type === "signup" ? "signup" : "signin"}`, postInputs);
             const jwt = response.data;
 
             localStorage.setItem("token", jwt);

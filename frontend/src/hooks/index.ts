@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import axios from "axios";
-import { BACKEND_URL } from "../config";
+import dotenv from 'dotenv';
+dotenv.config();
 
 
 export interface Blog {
@@ -17,7 +18,7 @@ export const useBlog = ({ id }: { id: string }) => {
     const [blog, setBlog] = useState<Blog>();
 
     useEffect(() => {
-        axios.get(`${BACKEND_URL}/api/v1/blog/${id}`, {
+        axios.get(`${process.env.BACKEND_URL}/api/v1/blog/${id}`, {
             headers: {
                 Authorization: localStorage.getItem("token")
             }
