@@ -16,49 +16,38 @@ export const userRouter=new Hono<
 
 
 //route for user signup
-userRouter.post('/signup',async (c)=>{
-    const prisma = new PrismaClient({
-      datasourceUrl: c.env.DATABASE_URL,
-  }).$extends(withAccelerate())
-    
-  
-    
-    try{
-      const body=await c.req.json();
-
-      const {success}=signUpInput.safeParse(body);
-
-      if(!success){
-        c.status(411);
-        c.json({message:"Invalid input"})
-      }
-      const user=await prisma.user.create({
-        data:{
-          email:body.email,
-          name:body.name,
-          password:body.password  
-        }, 
+userRouter.post('/signup', async (c) => {
+  const body = await c.req.json();
+  const { success } = signUpInput.safeParse(body);
+  if (!success) {
+      c.status(411);
+      return c.json({
+          message: "Invalid input"
       })
-      const payload={
-        id:user.id
+  }
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate())
+
+  try {
+    const user = await prisma.user.create({
+      data: {
+        email: body.email,
+        password: body.password,
+        name: body.name
       }
-      const secret=c.env.JWT_SECRET
-    
-      const token=await sign(payload,
-        secret)
-    
-    
-      return c.json({jwt:token});
-  
-    }
-    catch(error){
-      c.status(411)
-      c.json({error:"Internal Server Error"})
-  
-    }
-  
-  
-  })
+    })
+    const jwt = await sign({
+      id: user.id
+    }, c.env.JWT_SECRET);
+
+    return c.text(jwt)
+  } catch(e) {
+    console.log(e);
+    c.status(411);  
+    return c.text('Invalid')
+  }
+})
   
   //route for user sign in
   userRouter.post('/signin',async (c)=>{
@@ -85,7 +74,7 @@ userRouter.post('/signup',async (c)=>{
     
       const token=await sign({id:user.id},c.env.JWT_SECRET);
       c.status(200);
-      return c.json({token});
+      return c.text(token);
     }
     catch(error){
       c.status(411)

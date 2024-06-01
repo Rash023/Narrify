@@ -1,27 +1,27 @@
 import z from "zod";
 export declare const signUpInput: z.ZodObject<{
-    username: z.ZodString;
+    email: z.ZodString;
     password: z.ZodString;
     name: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    username: string;
+    email: string;
     password: string;
     name: string;
 }, {
-    username: string;
+    email: string;
     password: string;
     name: string;
 }>;
 export declare const signInInput: z.ZodObject<{
-    username: z.ZodString;
+    email: z.ZodString;
     password: z.ZodString;
     name: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    username: string;
+    email: string;
     password: string;
     name: string;
 }, {
-    username: string;
+    email: string;
     password: string;
     name: string;
 }>;

@@ -33,7 +33,7 @@ blogRouter.use('/*',async (c,next)=>{
         if(user){
             //@ts-ignore
             c.set("id",user.id);
-            await next()
+            await next();
         }
         else{
           c.status(403) 

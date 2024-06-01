@@ -8,15 +8,17 @@ import { BACKEND_URL } from "../config";
 export function Auth({type}:{type:"signup" | "signin"}){
     const navigate = useNavigate();
     const [postInputs, setPostInputs] = useState<SignUpInput>({
-        name: "",
-        username: "",
-        password: ""
+        email: "",
+        password: "",
+        name: ""
+        
     });
 
     async function sendRequest() {
         try {
             const response = await axios.post(`${BACKEND_URL}/api/v1/user/${type === "signup" ? "signup" : "signin"}`, postInputs);
             const jwt = response.data;
+
             localStorage.setItem("token", jwt);
             navigate("/blogs");
         } catch(e) {
@@ -46,10 +48,10 @@ export function Auth({type}:{type:"signup" | "signin"}){
                             name: e.target.value
                         })
                     }} /> : null}
-                    <LabelledInput label="Username" placeholder="example@gmail.com" onChange={(e) => {
+                    <LabelledInput label="email" placeholder="example@gmail.com" onChange={(e) => {
                         setPostInputs({
                             ...postInputs,
-                            username: e.target.value
+                            email: e.target.value
                         })
                     }} />
                     <LabelledInput label="Password" type={"password"} placeholder="123456" onChange={(e) => {
